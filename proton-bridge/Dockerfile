@@ -8,7 +8,7 @@ RUN git clone -b v3.3.2 https://github.com/ProtonMail/proton-bridge.git \
 	&& cd proton-bridge \
 	&& make build-nogui
 
-FROM debian:buster
+FROM debian:bookworm
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends socat pass ca-certificates libsecret-1-0 \
 	&& rm -rf /var/lib/apt/lists/*
