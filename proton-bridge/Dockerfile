@@ -4,7 +4,7 @@ WORKDIR /go/src/ProtonMail/
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends libsecret-1-dev
 
-RUN git clone -b v3.3.2 https://github.com/ProtonMail/proton-bridge.git \
+RUN git clone -b v3.5.4 https://github.com/ProtonMail/proton-bridge.git \
 	&& cd proton-bridge \
 	&& make build-nogui
 
