@@ -1,4 +1,4 @@
-FROM nextcloud:27.1.3
+FROM nextcloud:28.0.0
 
 RUN { \
         echo 'opcache.enable=1'; \
@@ -21,7 +21,12 @@ RUN set -ex; \
     \
     apt-get update; \
     apt-get install -y --no-install-recommends \
+	libbz2-dev \
         ffmpeg \
         libmagickcore-6.q16-6-extra \
     ; \
     rm -rf /var/lib/apt/lists/*
+
+RUN set -ex; \
+    \
+    docker-php-ext-install bz2
