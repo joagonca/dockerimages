@@ -1,4 +1,4 @@
-FROM nextcloud:28.0.1
+FROM nextcloud:28.0.2
 
 RUN { \
         echo 'opcache.enable=1'; \
