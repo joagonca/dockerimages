@@ -74,11 +74,17 @@ RUN set -ex; \
     \
     apt-get install -y --no-install-recommends \
 	libbz2-dev \
-    ffmpeg \
-#    libmagickcore-6.q16-6-extra \
+	ffmpeg \
+	intel-media-va-driver \
+#	libmagickcore-6.q16-6-extra \
     ; \
     rm -rf /var/lib/apt/lists/*
 
 RUN set -ex; \
     \
     docker-php-ext-install bz2
+
+# Cleanup
+RUN apt-get remove -y libtool automake autoconf pkgconf cmake build-essential git; \
+	apt-get autoremove -y
+
