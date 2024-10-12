@@ -1,4 +1,4 @@
-FROM nextcloud:29.0.7
+FROM nextcloud:29.0.8
 
 # Tune opcache
 RUN { \
