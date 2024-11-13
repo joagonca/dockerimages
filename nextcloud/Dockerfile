@@ -1,37 +1,15 @@
-FROM nextcloud:30.0.2
-
-# Tune opcache
-RUN { \
-        echo 'opcache.enable=1'; \
-        echo 'opcache.interned_strings_buffer=32'; \
-        echo 'opcache.max_accelerated_files=10000'; \
-        echo 'opcache.memory_consumption=256'; \
-        echo 'opcache.save_comments=1'; \
-        echo 'opcache.revalidate_freq=1'; \
-    } > /usr/local/etc/php/conf.d/opcache-recommended.ini;
-
-# Enable Redis session handler
-RUN { \
-        echo 'session.save_handler=redis'; \
-        echo 'session.save_path="tcp://redis:6379?database=0"'; \
-        echo 'redis.session.locking_enabled=1'; \
-        echo 'redis.session.lock_retries=-1'; \
-        echo 'redis.session.lock_wait_time=10000'; \
-    } > /usr/local/etc/php/conf.d/php-redis.ini;
-
-# Install build dependencies
-RUN apt-get update; \
+FROM nextcloud:30.0.2 AS builder
+# Common dependencies for all stages
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libtool automake autoconf pkgconf cmake build-essential git
-
-# Install Imagemagick build dependencies
-RUN apt-get install -y --no-install-recommends \
-    zlib1g-dev libzstd-dev fontconfig libraqm-dev libgvc6 \
+    libtool automake autoconf pkgconf cmake build-essential git \
     libjpeg-dev liblcms2-dev libopenjp2-7-dev liblqr-1-0-dev \
-    liblzma-dev openexr libpangocairo-1.0-0 libpango1.0-dev \
-    libpng-dev libraw-dev libtiff-dev libwebp-dev libwebpmux3 libwmf-dev libxml2-dev
+    liblzma-dev libpangocairo-1.0-0 libpango1.0-dev libpng-dev \
+    libraw-dev libtiff-dev libwebp-dev libwmf-dev libxml2-dev ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install libde265 (libheif build dependency)
+# Stage 1: Build libde265
+FROM builder AS libde265-builder
 RUN set -ex; \
     git clone -b v1.0.15 https://github.com/strukturag/libde265.git libde265; \
     cd libde265; \
@@ -44,7 +22,9 @@ RUN set -ex; \
     make install; \
     cd ../..
 
-# Install libheif (Imagemagick build dependency)
+
+# Stage 2: Build libheif
+FROM builder AS libheif-builder
 RUN set -ex; \
     git clone -b v1.18.2 https://github.com/strukturag/libheif.git libheif; \
     cd libheif; \
@@ -55,7 +35,8 @@ RUN set -ex; \
     make install; \
     cd ../..
 
-# Install Imagemagick
+# Stage 3: Build ImageMagick
+FROM builder AS imagemagick-builder
 RUN set -ex; \
     git clone -b 6.9.13-16 https://github.com/ImageMagick/ImageMagick6.git ImageMagick; \
     cd ImageMagick; \
@@ -64,6 +45,34 @@ RUN set -ex; \
     make install; \
     ldconfig /usr/local/lib; \
     cd ..
+
+# Final Nextcloud Image
+FROM nextcloud:30
+
+# Copy compiled libraries from each previous stage
+COPY --from=libde265-builder /usr/local/lib /usr/local/lib
+COPY --from=libheif-builder /usr/local/lib /usr/local/lib
+COPY --from=imagemagick-builder /usr/local/lib /usr/local/lib
+
+# Update library paths
+RUN ldconfig
+
+# Configure PHP and Redis settings
+RUN { \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.interned_strings_buffer=32'; \
+        echo 'opcache.max_accelerated_files=10000'; \
+        echo 'opcache.memory_consumption=256'; \
+        echo 'opcache.save_comments=1'; \
+        echo 'opcache.revalidate_freq=1'; \
+    } > /usr/local/etc/php/conf.d/opcache-recommended.ini && \
+    { \
+        echo 'session.save_handler=redis'; \
+        echo 'session.save_path="tcp://nc-redis:6379?database=0"'; \
+        echo 'redis.session.locking_enabled=1'; \
+        echo 'redis.session.lock_retries=-1'; \
+        echo 'redis.session.lock_wait_time=10000'; \
+    } > /usr/local/etc/php/conf.d/php-redis.ini
 
 # Nextcloud dependencies
 RUN set -ex; \
