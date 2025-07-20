@@ -41,3 +41,8 @@ RUN set -ex; \
 RUN apt-get remove -y libtool automake autoconf pkgconf cmake build-essential git; \
 	apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*
+
+COPY docker-entrypoint-wrapper.sh /
+RUN chmod +x /docker-entrypoint-wrapper.sh
+
+ENTRYPOINT ["/docker-entrypoint-wrapper.sh"]
