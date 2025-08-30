@@ -1,4 +1,4 @@
-FROM nextcloud:31.0.7
+FROM nextcloud:31.0.8
 
 # Tune opcache
 RUN { \
@@ -23,17 +23,10 @@ RUN { \
 RUN set -ex; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-	libmagickcore-6.q16-6-extra \
+	libmagickcore-7.q16-10-extra \
 	libbz2-dev \
 	ffmpeg \
 	intel-media-va-driver
-
-# Updating libheif
-RUN set -ex; \
-    echo 'deb http://deb.debian.org/debian bookworm-backports main' >> /etc/apt/sources.list; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-	libheif-plugins-all/stable-backports
 
 RUN set -ex; \
     docker-php-ext-install bz2
