@@ -1,4 +1,4 @@
-FROM nextcloud:34.0.5
+FROM nextcloud:35.0.2
 
 # Tune opcache
 RUN { \
@@ -23,7 +23,6 @@ RUN { \
 RUN set -ex; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-	libmagickcore-7.q16-10-extra \
 	libbz2-dev \
 	ffmpeg \
 	intel-media-va-driver
